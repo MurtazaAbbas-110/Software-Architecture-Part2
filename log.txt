@@ -1,0 +1,6 @@
+2025/01/04 19:31:06 - Failed to add customer Jon wick: Parcel ID X999 not found
+2025/01/04 19:32:02 - Added new parcel: X999 with weight: 275.0 and dimensions: 12 34 12 
+2025/01/04 19:32:24 - Added new customer: John Wick with parcel ID: X999
+2025/01/04 19:32:49 - Failed to remove parcel X999: still in depot
+2025/01/04 19:33:13 - Failed to remove customer John Wick: Parcel X999 is still in depot
+2025/01/04 19:35:22 - Customer Ann Jones collected parcel X064. Fee: £14.00

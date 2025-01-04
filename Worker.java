@@ -22,6 +22,6 @@ public class Worker {
 
     private void releaseParcel(Parcel parcel) {
         parcel.setStatus("Released");
-        
+
     }
 }
