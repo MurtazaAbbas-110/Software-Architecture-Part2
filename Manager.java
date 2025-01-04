@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.Queue;
 import java.util.Scanner;
 
 public class Manager {
@@ -125,15 +126,117 @@ public class Manager {
     }
 
     private void processNextCustomer() {
-        if (customerQueue.isEmpty()) {
-            System.out.println("No customers in queue.");
+        System.out.print("Enter parcel ID to process: ");
+        String parcelId = scanner.nextLine(); // Use the class-level Scanner instance
+    
+        // Check if parcel exists
+        Parcel parcel = parcelMap.getParcel(parcelId);
+        if (parcel == null) {
+            System.out.println("Parcel not found");
+            log.addEntry("Failed to process parcel: " + parcelId + " - not found");
             return;
         }
-
-        Customer customer = customerQueue.removeCustomer();
-        worker.processCustomer(customer, parcelMap, log);
-        System.out.println("Processed customer: " + customer.getName());
+    
+        // Check if customer exists with this parcel
+        Queue<Customer> queue = customerQueue.getQueue();
+        Customer customerToProcess = null;
+    
+        for (Customer customer : queue) {
+            if (customer.getParcelId().equals(parcelId)) {
+                customerToProcess = customer;
+                break;
+            }
+        }
+    
+        if (customerToProcess == null) {
+            System.out.println("No customer found with this parcel ID");
+            log.addEntry("Failed to process parcel: " + parcelId + " - no customer found");
+            return;
+        }
+    
+        // Calculate the fee using the Worker class
+        double processingFee = worker.calculateFee(parcel);
+    
+        // Process the customer using the Worker class
+        worker.processCustomer(customerToProcess, parcelMap, log);
+    
+        // Add details to released.csv
+        try (FileWriter fw = new FileWriter("released.csv", true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+    
+            out.println(customerToProcess.getName() + "," + customerToProcess.getParcelId() + "," +
+                        parcel.getWeight() + "," + parcel.getDimensions() + "," +
+                        parcel.getStatus() + ",£" + String.format("%.2f", processingFee));
+            System.out.println("Details added to released.csv");
+        } catch (IOException e) {
+            System.err.println("Error updating released file: " + e.getMessage());
+            log.addEntry("Error adding release details to released.csv: " + e.getMessage());
+        }
+    
+        // Remove from Custs.csv
+        try {
+            File inputFile = new File("Custs.csv");
+            File tempFile = new File("Custs_temp.csv");
+    
+            BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+    
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                if (data.length >= 2 && data[0].trim().equals(customerToProcess.getName()) && data[1].trim().equals(parcelId)) {
+                    continue; // Skip the line for the processed customer
+                }
+                writer.write(line + System.getProperty("line.separator"));
+            }
+            writer.close();
+            reader.close();
+    
+            inputFile.delete();
+            tempFile.renameTo(inputFile);
+            log.addEntry("Removed customer from Custs.csv: " + customerToProcess.getName());
+        } catch (IOException e) {
+            System.err.println("Error updating Custs.csv: " + e.getMessage());
+            log.addEntry("Error removing customer from Custs.csv: " + e.getMessage());
+        }
+    
+        // Remove from Parcels.csv
+        try {
+            File inputFile = new File("Parcels.csv");
+            File tempFile = new File("Parcels_temp.csv");
+    
+            BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+    
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                if (data.length >= 1 && data[0].trim().equals(parcelId)) {
+                    continue; // Skip the line for the released parcel
+                }
+                writer.write(line + System.getProperty("line.separator"));
+            }
+            writer.close();
+            reader.close();
+    
+            inputFile.delete();
+            tempFile.renameTo(inputFile);
+            log.addEntry("Removed parcel from Parcels.csv: " + parcelId);
+        } catch (IOException e) {
+            System.err.println("Error updating Parcels.csv: " + e.getMessage());
+            log.addEntry("Error removing parcel from Parcels.csv: " + e.getMessage());
+        }
+    
+        // Remove customer from the in-memory queue
+        customerQueue.removeCustomer();
+    
+        System.out.println("Processed customer: " + customerToProcess.getName() + " with parcel: " + parcelId +
+                           ". Fee: £" + String.format("%.2f", processingFee));
     }
+    
+    
+        
 
     private void displayCustomerQueue() {
         System.out.println("\nCustomer Queue:");
