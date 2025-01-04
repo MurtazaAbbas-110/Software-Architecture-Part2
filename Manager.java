@@ -1,20 +1,19 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Scanner;
 import java.io.*;
+import java.util.Scanner;
 
 public class Manager {
     private QueueOfCustomers customerQueue;
     private ParcelMap parcelMap;
     private Worker worker;
     private Log log;
+    private Scanner scanner; // Declare a single Scanner object
 
     public Manager() {
         customerQueue = new QueueOfCustomers();
         parcelMap = new ParcelMap();
         worker = new Worker();
         log = Log.getInstance();
+        scanner = new Scanner(System.in); // Initialize the Scanner object
     }
 
     public void loadData() {
@@ -69,7 +68,6 @@ public class Manager {
     }
 
     public void run() {
-        Scanner scanner = new Scanner(System.in);
         boolean running = true;
 
         while (running) {
@@ -108,7 +106,8 @@ public class Manager {
                     System.out.println("Invalid choice. Please try again.");
             }
         }
-        scanner.close();
+
+        scanner.close(); // Close the Scanner only when the program exits
     }
 
     private void displayMenu() {
@@ -152,7 +151,6 @@ public class Manager {
     }
 
     private void addNewCustomer() {
-        Scanner scanner = new Scanner(System.in);
         System.out.print("Enter customer name: ");
         String name = scanner.nextLine();
         System.out.print("Enter parcel ID: ");
@@ -165,12 +163,10 @@ public class Manager {
             return;
         }
 
-        // Add to queue
         int sequence = customerQueue.size() + 1;
         Customer newCustomer = new Customer(name, parcelId, sequence);
         customerQueue.addCustomer(newCustomer);
 
-        // Update CSV file
         try (FileWriter fw = new FileWriter("Custs.csv", true);
              BufferedWriter bw = new BufferedWriter(fw);
              PrintWriter out = new PrintWriter(bw)) {
@@ -183,7 +179,6 @@ public class Manager {
     }
 
     private void addNewParcel() {
-        Scanner scanner = new Scanner(System.in);
         System.out.print("Enter parcel ID: ");
         String id = scanner.nextLine();
         System.out.print("Enter weight: ");
@@ -194,7 +189,6 @@ public class Manager {
         Parcel newParcel = new Parcel(id, weight, dimensions);
         parcelMap.addParcel(newParcel);
 
-        // Update CSV file
         try (FileWriter fw = new FileWriter("Parcels.csv", true);
              BufferedWriter bw = new BufferedWriter(fw);
              PrintWriter out = new PrintWriter(bw)) {
@@ -208,7 +202,6 @@ public class Manager {
     }
 
     private void removeCustomer() {
-        Scanner scanner = new Scanner(System.in);
         System.out.print("Enter customer name to remove: ");
         String name = scanner.nextLine();
         System.out.print("Enter parcel ID: ");
@@ -221,7 +214,6 @@ public class Manager {
             return;
         }
 
-        // Remove from CSV
         try {
             File inputFile = new File("Custs.csv");
             File tempFile = new File("Custs_temp.csv");
@@ -239,9 +231,9 @@ public class Manager {
                 }
                 writer.write(line + System.getProperty("line.separator"));
             }
-            writer.close(); 
+            writer.close();
             reader.close();
-            
+
             if (removed) {
                 inputFile.delete();
                 tempFile.renameTo(inputFile);
@@ -258,7 +250,6 @@ public class Manager {
     }
 
     private void removeParcel() {
-        Scanner scanner = new Scanner(System.in);
         System.out.print("Enter parcel ID to remove: ");
         String id = scanner.nextLine();
 
@@ -275,7 +266,6 @@ public class Manager {
             return;
         }
 
-        // Remove from CSV
         try {
             File inputFile = new File("Parcels.csv");
             File tempFile = new File("Parcels_temp.csv");
@@ -295,7 +285,7 @@ public class Manager {
             }
             writer.close();
             reader.close();
-            
+
             if (removed) {
                 inputFile.delete();
                 tempFile.renameTo(inputFile);
