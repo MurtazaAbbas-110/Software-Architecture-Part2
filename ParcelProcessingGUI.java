@@ -64,6 +64,7 @@ public class ParcelProcessingGUI {
         JButton displayCustomersBtn = new JButton("Display Customers");
         JButton displayParcelsBtn = new JButton("Display Parcels");
         JButton displayLogBtn = new JButton("Display Log");
+        JButton displayProcessedBtn = new JButton("Display Processed Parcels");
         JButton exitBtn = new JButton("Exit");
 
         dashboardPanel.add(processCustomerBtn);
@@ -74,35 +75,26 @@ public class ParcelProcessingGUI {
         dashboardPanel.add(displayCustomersBtn);
         dashboardPanel.add(displayParcelsBtn);
         dashboardPanel.add(displayLogBtn);
+        dashboardPanel.add(displayProcessedBtn);
         dashboardPanel.add(exitBtn);
 
         frame.add(dashboardPanel, BorderLayout.CENTER);
 
         // Real-time Status Panel
-        JPanel statusPanel = new JPanel(new GridLayout(3, 1));
+        JPanel statusPanel = new JPanel(new GridLayout(1, 1));
         statusPanel.setBorder(BorderFactory.createTitledBorder("Current Status"));
 
         JTextArea currentParcelArea = new JTextArea("Current Parcel: None");
         currentParcelArea.setFont(new Font("Arial", Font.PLAIN, 14));
         currentParcelArea.setEditable(false);
 
-        JTextArea customerQueueArea = new JTextArea("Customer Queue:\nNo customers in queue.");
-        customerQueueArea.setFont(new Font("Arial", Font.PLAIN, 14));
-        customerQueueArea.setEditable(false);
-
-        JTextArea parcelQueueArea = new JTextArea("Parcel Queue:\nNo parcels in queue.");
-        parcelQueueArea.setFont(new Font("Arial", Font.PLAIN, 14));
-        parcelQueueArea.setEditable(false);
-
         statusPanel.add(new JScrollPane(currentParcelArea));
-        statusPanel.add(new JScrollPane(customerQueueArea));
-        statusPanel.add(new JScrollPane(parcelQueueArea));
 
         frame.add(statusPanel, BorderLayout.SOUTH);
 
         // Button Action Listeners
         processCustomerBtn.addActionListener(e -> {
-            openProcessCustomerWindow(currentParcelArea, customerQueueArea, parcelQueueArea);
+            openProcessCustomerWindow(currentParcelArea);
         });
         addCustomerBtn.addActionListener(e -> openAddCustomerWindow());
         removeCustomerBtn.addActionListener(e -> openRemoveCustomerWindow());
@@ -111,6 +103,7 @@ public class ParcelProcessingGUI {
         displayCustomersBtn.addActionListener(e -> openDisplayCustomersWindow());
         displayParcelsBtn.addActionListener(e -> openDisplayParcelsWindow());
         displayLogBtn.addActionListener(e -> openDisplayLogWindow());
+        displayProcessedBtn.addActionListener(e -> openDisplayProcessedParcelsWindow());
         exitBtn.addActionListener(e -> System.exit(0));
 
         // Apply Nimbus Look and Feel
@@ -123,7 +116,7 @@ public class ParcelProcessingGUI {
         frame.setVisible(true);
     }
 
-    private void openProcessCustomerWindow(JTextArea currentParcelArea, JTextArea customerQueueArea, JTextArea parcelQueueArea) {
+    private void openProcessCustomerWindow(JTextArea currentParcelArea) {
         JFrame processWindow = new JFrame("Process Customer");
         processWindow.setSize(400, 300);
         processWindow.setLayout(new BorderLayout(10, 10));
@@ -140,8 +133,6 @@ public class ParcelProcessingGUI {
             if (parcelId != null && !parcelId.trim().isEmpty()) {
                 manager.processNextCustomer(parcelId, resultArea);
                 currentParcelArea.setText("Current Parcel: " + parcelId);
-                customerQueueArea.setText("Customer Queue:\n" + manager.getCustomerQueueStatus());
-                parcelQueueArea.setText("Parcel Queue:\n" + manager.getParcelQueueStatus());
             } else {
                 resultArea.append("Invalid Parcel ID.\n");
             }
@@ -153,6 +144,22 @@ public class ParcelProcessingGUI {
         processWindow.add(new JScrollPane(resultArea), BorderLayout.SOUTH);
 
         processWindow.setVisible(true);
+    }
+
+    private void openDisplayProcessedParcelsWindow() {
+        JFrame displayProcessedWindow = new JFrame("Processed Parcels");
+        displayProcessedWindow.setSize(600, 400);
+
+        JTextArea processedArea = new JTextArea();
+        processedArea.setFont(new Font("Arial", Font.PLAIN, 14));
+        processedArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(processedArea);
+
+        // Load the processed parcels from the file and display them
+        manager.displayProcessedParcels(processedArea);
+
+        displayProcessedWindow.add(scrollPane);
+        displayProcessedWindow.setVisible(true);
     }
 
     private void openAddCustomerWindow() {
@@ -335,3 +342,4 @@ public class ParcelProcessingGUI {
         SwingUtilities.invokeLater(ParcelProcessingGUI::new);
     }
 }
+

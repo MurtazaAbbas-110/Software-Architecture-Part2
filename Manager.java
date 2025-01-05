@@ -464,8 +464,16 @@ public void displayLog(JTextArea displayArea) {
             log.addEntry("Error removing parcel from file: " + e.getMessage());
         }
     }
-    
-
+    public void displayProcessedParcels(JTextArea processedArea) {
+        try (BufferedReader br = new BufferedReader(new FileReader("released.csv"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                processedArea.append(line + "\n");
+            }
+        } catch (IOException e) {
+            processedArea.append("Error loading processed parcels: " + e.getMessage() + "\n");
+        }
+    }
     public static void main(String[] args) {
         Manager manager = new Manager();
         manager.loadData();
