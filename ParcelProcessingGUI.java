@@ -16,6 +16,7 @@ public class ParcelProcessingGUI {
         welcomeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         welcomeFrame.setSize(600, 400);
         welcomeFrame.setLayout(new BorderLayout(10, 10));
+        welcomeFrame.setLocationRelativeTo(null); // Center the frame on the screen
 
         JLabel welcomeLabel = new JLabel("Welcome to Depot Parcel Processing System", JLabel.CENTER);
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 18));
@@ -44,6 +45,7 @@ public class ParcelProcessingGUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 700);
         frame.setLayout(new BorderLayout(10, 10));
+        frame.setLocationRelativeTo(null); // Center the frame on the screen
 
         // Title
         JLabel titleLabel = new JLabel("Depot Parcel Processing System", JLabel.CENTER);
@@ -116,6 +118,7 @@ public class ParcelProcessingGUI {
         JFrame processWindow = new JFrame("Process Customer");
         processWindow.setSize(400, 300);
         processWindow.setLayout(new BorderLayout(10, 10));
+        processWindow.setLocationRelativeTo(null); // Center the frame on the screen
 
         JLabel instructionLabel = new JLabel("Enter Parcel ID to Process:", JLabel.CENTER);
         instructionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -149,7 +152,7 @@ public class ParcelProcessingGUI {
     private void openDisplayProcessedParcelsWindow() {
         JFrame displayProcessedWindow = new JFrame("Processed Parcels");
         displayProcessedWindow.setSize(600, 400);
-
+        displayProcessedWindow.setLocationRelativeTo(null); 
         JTextArea processedArea = new JTextArea();
         processedArea.setFont(new Font("Arial", Font.PLAIN, 14));
         processedArea.setEditable(false);
@@ -165,6 +168,7 @@ public class ParcelProcessingGUI {
     private void openAddCustomerWindow() {
         JFrame addCustomerWindow = new JFrame("Add Customer");
         addCustomerWindow.setSize(400, 300);
+        addCustomerWindow.setLocationRelativeTo(null); // Center the frame on the screen
         JPanel contentPanel = new JPanel(new GridLayout(4, 1, 10, 10));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -198,6 +202,7 @@ public class ParcelProcessingGUI {
     private void openRemoveCustomerWindow() {
         JFrame removeCustomerWindow = new JFrame("Remove Customer");
         removeCustomerWindow.setSize(400, 300);
+        removeCustomerWindow.setLocationRelativeTo(null);
         JPanel contentPanel = new JPanel(new GridLayout(4, 1, 10, 10));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -231,6 +236,7 @@ public class ParcelProcessingGUI {
     private void openAddParcelWindow() {
         JFrame addParcelWindow = new JFrame("Add Parcel");
         addParcelWindow.setSize(400, 300);
+        addParcelWindow.setLocationRelativeTo(null); // Center the frame on the screen
         JPanel contentPanel = new JPanel(new GridLayout(5, 1, 10, 10));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -273,6 +279,7 @@ public class ParcelProcessingGUI {
     private void openRemoveParcelWindow() {
         JFrame removeParcelWindow = new JFrame("Remove Parcel");
         removeParcelWindow.setSize(400, 300);
+        removeParcelWindow.setLocationRelativeTo(null); // Center the frame on the screen
         JPanel contentPanel = new JPanel(new GridLayout(3, 1, 10, 10));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -302,6 +309,7 @@ public class ParcelProcessingGUI {
     private void openDisplayCustomersWindow() {
         JFrame displayCustomersWindow = new JFrame("Customer Queue");
         displayCustomersWindow.setSize(400, 300);
+        displayCustomersWindow.setLocationRelativeTo(null); // Center the frame on the screen
         JTextArea customersArea = new JTextArea();
         customersArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(customersArea);
@@ -315,6 +323,7 @@ public class ParcelProcessingGUI {
     private void openDisplayParcelsWindow() {
         JFrame displayParcelsWindow = new JFrame("Parcels in Depot");
         displayParcelsWindow.setSize(400, 300);
+        displayParcelsWindow.setLocationRelativeTo(null); 
         JTextArea parcelsArea = new JTextArea();
         parcelsArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(parcelsArea);
@@ -328,6 +337,7 @@ public class ParcelProcessingGUI {
     private void openDisplayLogWindow() {
         JFrame displayLogWindow = new JFrame("System Log");
         displayLogWindow.setSize(400, 300);
+        displayLogWindow.setLocationRelativeTo(null);
         JTextArea logArea = new JTextArea();
         logArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(logArea);
