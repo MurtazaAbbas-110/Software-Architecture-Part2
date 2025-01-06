@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class ParcelProcessingGUI {
 
@@ -93,9 +91,7 @@ public class ParcelProcessingGUI {
         frame.add(statusPanel, BorderLayout.SOUTH);
 
         // Button Action Listeners
-        processCustomerBtn.addActionListener(e -> {
-            openProcessCustomerWindow(currentParcelArea);
-        });
+        processCustomerBtn.addActionListener(e -> openProcessCustomerWindow(currentParcelArea));
         addCustomerBtn.addActionListener(e -> openAddCustomerWindow());
         removeCustomerBtn.addActionListener(e -> openRemoveCustomerWindow());
         addParcelBtn.addActionListener(e -> openAddParcelWindow());
@@ -131,8 +127,12 @@ public class ParcelProcessingGUI {
         processBtn.addActionListener(e -> {
             String parcelId = parcelIdField.getText();
             if (parcelId != null && !parcelId.trim().isEmpty()) {
-                manager.processNextCustomer(parcelId, resultArea);
-                currentParcelArea.setText("Current Parcel: " + parcelId);
+                boolean success = manager.processNextCustomer(parcelId, resultArea);
+                if (success) {
+                    currentParcelArea.setText("Current Parcel Processed: " + parcelId);
+                } else {
+                    currentParcelArea.setText("Processing Failed for Parcel: " + parcelId);
+                }
             } else {
                 resultArea.append("Invalid Parcel ID.\n");
             }

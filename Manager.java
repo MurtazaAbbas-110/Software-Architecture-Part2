@@ -152,6 +152,133 @@ public class Manager {
     }
 }
 
+private void updateReleasedFile(Customer customerToProcess, Parcel parcel, double processingFee, JTextArea displayArea) {
+    try (FileWriter fw = new FileWriter("released.csv", true);
+         BufferedWriter bw = new BufferedWriter(fw);
+         PrintWriter out = new PrintWriter(bw)) {
+        
+        // Write customer and parcel details to the file
+        out.println(customerToProcess.getName() + "," +
+                    customerToProcess.getParcelId() + "," +
+                    parcel.getWeight() + "," +
+                    parcel.getDimensions() + "," +
+                    parcel.getStatus() + ",£" + String.format("%.2f", processingFee));
+        
+        displayArea.append("Details added to released.csv\n");
+    } catch (IOException e) {
+        displayArea.append("Error updating released file: " + e.getMessage() + "\n");
+    }
+}
+
+private void removeCustomerFromFile(String customerName, String parcelId, JTextArea displayArea) {
+    try {
+        File inputFile = new File("Custs.csv");
+        File tempFile = new File("Custs_temp.csv");
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
+            
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                // Skip the customer to be removed
+                if (data.length >= 2 && data[0].trim().equals(customerName) && data[1].trim().equals(parcelId)) {
+                    continue;
+                }
+                writer.write(line + System.lineSeparator());
+            }
+        }
+        
+        // Replace original file with the updated one
+        if (inputFile.delete() && tempFile.renameTo(inputFile)) {
+            displayArea.append("Customer removed from Custs.csv\n");
+        } else {
+            displayArea.append("Error updating Custs.csv\n");
+        }
+    } catch (IOException e) {
+        displayArea.append("Error updating Custs.csv: " + e.getMessage() + "\n");
+    }
+}
+
+private void removeParcelFromFile(String parcelId, JTextArea displayArea) {
+    try {
+        File inputFile = new File("Parcels.csv");
+        File tempFile = new File("Parcels_temp.csv");
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
+            
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                // Skip the parcel to be removed
+                if (data.length >= 1 && data[0].trim().equals(parcelId)) {
+                    continue;
+                }
+                writer.write(line + System.lineSeparator());
+            }
+        }
+        
+        // Replace original file with the updated one
+        if (inputFile.delete() && tempFile.renameTo(inputFile)) {
+            displayArea.append("Parcel removed from Parcels.csv\n");
+        } else {
+            displayArea.append("Error updating Parcels.csv\n");
+        }
+    } catch (IOException e) {
+        displayArea.append("Error updating Parcels.csv: " + e.getMessage() + "\n");
+    }
+}
+
+
+public boolean processNextCustomer(String parcelId, JTextArea displayArea) {
+    try {
+        // Validate Parcel ID in Parcels.csv
+        if (!isParcelInParcelFile(parcelId)) {
+            displayArea.append("Parcel not found in Parcels.csv: " + parcelId + "\n");
+            return false;
+        }
+
+        // Validate Parcel ID in Custs.csv
+        if (!isParcelInCustomerFile(parcelId)) {
+            displayArea.append("Parcel not associated with any customer in Custs.csv: " + parcelId + "\n");
+            return false;
+        }
+
+        // Find and process the customer
+        Customer customerToProcess = customerQueue.getQueue()
+                .stream()
+                .filter(customer -> customer.getParcelId().equals(parcelId))
+                .findFirst()
+                .orElse(null);
+
+        if (customerToProcess == null) {
+            displayArea.append("Customer with Parcel ID not found in memory queue: " + parcelId + "\n");
+            return false;
+        }
+
+        // Process logic (Calculate fee, update logs, etc.)
+        Parcel parcel = parcelMap.getParcel(parcelId);
+        double processingFee = worker.calculateFee(parcel);
+        worker.processCustomer(customerToProcess, parcelMap, log);
+
+        // Add to released.csv and remove from Custs.csv and Parcels.csv
+        updateReleasedFile(customerToProcess, parcel, processingFee, displayArea);
+        removeCustomerFromFile(customerToProcess.getName(), parcelId, displayArea);
+        removeParcelFromFile(parcelId, displayArea);
+
+        // Update in-memory structures
+        customerQueue.removeCustomer();
+        displayArea.append("Successfully processed customer: " + customerToProcess.getName() +
+                           " with parcel: " + parcelId + ". Fee: £" + String.format("%.2f", processingFee) + "\n");
+        return true;
+
+    } catch (Exception e) {
+        displayArea.append("Error processing customer with parcel ID " + parcelId + ": " + e.getMessage() + "\n");
+        return false;
+    }
+}
+
     private void displayMenu() {
         System.out.println("\n=== Depot Parcel Processing System ===");
         System.out.println("1. Process next customer");
@@ -166,123 +293,6 @@ public class Manager {
         System.out.print("Enter your choice: ");
     }
 
-    public void processNextCustomer(String parcelId, JTextArea displayArea) {
-    if (parcelId == null || parcelId.trim().isEmpty()) {
-        displayArea.append("Parcel ID cannot be empty.\n");
-        return;
-    }
-
-    // Check if parcel exists
-    Parcel parcel = parcelMap.getParcel(parcelId);
-    if (parcel == null) {
-        displayArea.append("Parcel not found: " + parcelId + "\n");
-        log.addEntry("Failed to process parcel: " + parcelId + " - not found");
-        return;
-    }
-
-    // Check if customer exists with this parcel
-    Queue<Customer> queue = customerQueue.getQueue();
-    Customer customerToProcess = null;
-
-    for (Customer customer : queue) {
-        if (customer.getParcelId().equals(parcelId)) {
-            customerToProcess = customer;
-            break;
-        }
-    }
-
-    if (customerToProcess == null) {
-        displayArea.append("No customer found with this parcel ID: " + parcelId + "\n");
-        log.addEntry("Failed to process parcel: " + parcelId + " - no customer found");
-        return;
-    }
-
-    // Calculate the fee using the Worker class
-    double processingFee = worker.calculateFee(parcel);
-
-    // Process the customer using the Worker class
-    worker.processCustomer(customerToProcess, parcelMap, log);
-
-    // Add details to released.csv
-    try (FileWriter fw = new FileWriter("released.csv", true);
-         BufferedWriter bw = new BufferedWriter(fw);
-         PrintWriter out = new PrintWriter(bw)) {
-
-        out.println(customerToProcess.getName() + "," + customerToProcess.getParcelId() + "," +
-                    parcel.getWeight() + "," + parcel.getDimensions() + "," +
-                    parcel.getStatus() + ",\u00A3" + String.format("%.2f", processingFee));
-        displayArea.append("Details added to released.csv\n");
-    } catch (IOException e) {
-        displayArea.append("Error updating released file: " + e.getMessage() + "\n");
-        log.addEntry("Error adding release details to released.csv: " + e.getMessage());
-    }
-
-    // Remove from Custs.csv
-    try {
-        File inputFile = new File("Custs.csv");
-        File tempFile = new File("Custs_temp.csv");
-
-        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-        BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-
-        String line;
-        while ((line = reader.readLine()) != null) {
-            String[] data = line.split(",");
-            if (data.length >= 2 && data[0].trim().equals(customerToProcess.getName()) && data[1].trim().equals(parcelId)) {
-                continue; // Skip the line for the processed customer
-            }
-            writer.write(line + System.lineSeparator());
-        }
-        writer.close();
-        reader.close();
-
-        if (inputFile.delete() && tempFile.renameTo(inputFile)) {
-            log.addEntry("Removed customer from Custs.csv: " + customerToProcess.getName());
-        } else {
-            displayArea.append("Error updating Custs.csv.\n");
-        }
-    } catch (IOException e) {
-        displayArea.append("Error updating Custs.csv: " + e.getMessage() + "\n");
-        log.addEntry("Error removing customer from Custs.csv: " + e.getMessage());
-    }
-
-    // Remove from Parcels.csv
-    try {
-        File inputFile = new File("Parcels.csv");
-        File tempFile = new File("Parcels_temp.csv");
-
-        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-        BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-
-        String line;
-        while ((line = reader.readLine()) != null) {
-            String[] data = line.split(",");
-            if (data.length >= 1 && data[0].trim().equals(parcelId)) {
-                continue; // Skip the line for the released parcel
-            }
-            writer.write(line + System.lineSeparator());
-        }
-        writer.close();
-        reader.close();
-
-        if (inputFile.delete() && tempFile.renameTo(inputFile)) {
-            log.addEntry("Removed parcel from Parcels.csv: " + parcelId);
-        } else {
-            displayArea.append("Error updating Parcels.csv.\n");
-        }
-    } catch (IOException e) {
-        displayArea.append("Error updating Parcels.csv: " + e.getMessage() + "\n");
-        log.addEntry("Error removing parcel from Parcels.csv: " + e.getMessage());
-    }
-
-    // Remove customer from the in-memory queue
-    customerQueue.removeCustomer();
-
-    displayArea.append("Processed customer: " + customerToProcess.getName() + " with parcel: " + parcelId +
-                       ". Fee: \u00A3" + String.format("%.2f", processingFee) + "\n");
-}
-
-    
     
         
 
@@ -474,6 +484,38 @@ public void displayLog(JTextArea displayArea) {
             processedArea.append("Error loading processed parcels: " + e.getMessage() + "\n");
         }
     }
+
+public boolean isParcelInCustomerFile(String parcelId) {
+    try (BufferedReader reader = new BufferedReader(new FileReader("Custs.csv"))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(",");
+            if (parts.length > 1 && parts[1].trim().equals(parcelId)) {
+                return true;
+            }
+        }
+    } catch (IOException e) {
+        System.err.println("Error reading Custs.csv: " + e.getMessage());
+    }
+    return false;
+}
+
+public boolean isParcelInParcelFile(String parcelId) {
+    try (BufferedReader reader = new BufferedReader(new FileReader("Parcels.csv"))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(",");
+            if (parts.length > 0 && parts[0].trim().equals(parcelId)) {
+                return true;
+            }
+        }
+    } catch (IOException e) {
+        System.err.println("Error reading Parcels.csv: " + e.getMessage());
+    }
+    return false;
+}
+
+
     public static void main(String[] args) {
         Manager manager = new Manager();
         manager.loadData();
